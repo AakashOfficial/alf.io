@@ -30,6 +30,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Locale;
+import java.util.Map;
 
 
 @RestController
@@ -41,23 +42,23 @@ public class EventApiV2Controller {
 
 
     @GetMapping("events")
-    public ResponseEntity<Model> listEvents(Model model, Locale locale, HttpServletRequest request) {
+    public ResponseEntity<Map<String, ?>> listEvents(Model model, Locale locale, HttpServletRequest request) {
         eventController.listEvents(model, locale);
-        return new ResponseEntity<>(model, getCorsHeaders(), HttpStatus.OK);
+        return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
     }
 
     @GetMapping("/event/{eventName}")
-    public ResponseEntity<Model> getEvent(@PathVariable("eventName") String eventName,
+    public ResponseEntity<Map<String, ?>> getEvent(@PathVariable("eventName") String eventName,
                                           Model model, HttpServletRequest request, Locale locale) {
         if ("/event/show-event".equals(eventController.showEvent(eventName, model, request, locale))) {
-            return new ResponseEntity<>(model, getCorsHeaders(), HttpStatus.OK);
+            return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
         } else {
             return ResponseEntity.notFound().headers(getCorsHeaders()).build();
         }
     }
 
     @PostMapping(value = "/event/{eventName}/reserve-tickets")
-    public ResponseEntity<Model> reserveTicket(@PathVariable("eventName") String eventName,
+    public ResponseEntity<Map<String, ?>> reserveTicket(@PathVariable("eventName") String eventName,
                                                @RequestBody ReservationForm reservation,
                                                BindingResult bindingResult,
                                                ServletWebRequest request,
@@ -67,11 +68,11 @@ public class EventApiV2Controller {
         String redirectResult = eventController.reserveTicket(eventName, reservation, bindingResult, request, redirectAttributes, locale);
 
         if (bindingResult.hasErrors()) {
-            return new ResponseEntity<>(redirectAttributes, getCorsHeaders(), HttpStatus.OK);
+            return new ResponseEntity<>(redirectAttributes.asMap(), getCorsHeaders(), HttpStatus.OK);
         } else {
             String reservationIdentifier = redirectResult.substring(redirectResult.length()).replace("/book", "");
             redirectAttributes.addAttribute("reservationIdentifier", reservationIdentifier);
-            return new ResponseEntity<>(redirectAttributes, getCorsHeaders(), HttpStatus.OK);
+            return new ResponseEntity<>(redirectAttributes.asMap(), getCorsHeaders(), HttpStatus.OK);
         }
 
     }
