@@ -85,7 +85,9 @@ public class EventApiV2Controller {
         if (bindingResult.hasErrors()) {
             return new ResponseEntity<>(redirectAttributes.asMap(), getCorsHeaders(), HttpStatus.OK);
         } else {
-            String reservationIdentifier = redirectResult.substring(redirectResult.length()).replace("/book", "");
+            String reservationIdentifier = redirectResult
+                .substring(redirectResult.lastIndexOf("reservation/")+"reservation/".length())
+                .replace("/book", "");
             redirectAttributes.addAttribute("reservationIdentifier", reservationIdentifier);
             return new ResponseEntity<>(redirectAttributes.asMap(), HttpStatus.OK);
         }
