@@ -18,6 +18,7 @@ package alfio.controller.api.v2.user;
 
 import alfio.controller.EventController;
 import alfio.controller.form.ReservationForm;
+import alfio.manager.EventManager;
 import alfio.model.result.ValidationResult;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -40,11 +41,15 @@ import java.util.Map;
 public class EventApiV2Controller {
 
     private final EventController eventController;
+    private final EventManager eventManager;
 
 
     @GetMapping("events")
     public ResponseEntity<Map<String, ?>> listEvents(Model model, Locale locale, HttpServletRequest request) {
-        eventController.listEvents(model, locale);
+        if(!"/event/event-list".equals(eventController.listEvents(model, locale))) {
+            model.addAttribute("singleEvent", true);
+            model.addAttribute("eventShortName", eventManager.getPublishedEvents().get(0).getShortName());
+        }
         return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
     }
 
