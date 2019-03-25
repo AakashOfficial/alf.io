@@ -16,20 +16,20 @@
  */
 package alfio.controller.api.v2.user;
 
-import alfio.controller.api.support.EventListItem;
-import alfio.manager.EventManager;
-import alfio.model.Event;
-import alfio.repository.EventDescriptionRepository;
+import alfio.controller.EventController;
+import alfio.controller.form.ReservationForm;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
 
 @RestController
@@ -37,21 +37,43 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class EventApiV2Controller {
 
-    private final EventManager eventManager;
-    private final EventDescriptionRepository eventDescriptionRepository;
+    private final EventController eventController;
 
-    //TODO: copy EventListItem to v2.model
-    @RequestMapping("events")
-    public ResponseEntity<List<EventListItem>> listEvents(HttpServletRequest request) {
-        var events = eventManager.getPublishedEvents();
-        var eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
-        var descriptionsByEventId = eventDescriptionRepository.findByEventIdsAsMap(eventIds);
 
-        var res = events.stream()
-            .map(ev -> new EventListItem(ev, request.getContextPath(), descriptionsByEventId.get(ev.getId())))
-            .collect(Collectors.toList());
+    @GetMapping("events")
+    public ResponseEntity<Model> listEvents(Model model, Locale locale, HttpServletRequest request) {
+        eventController.listEvents(model, locale);
+        return new ResponseEntity<>(model, getCorsHeaders(), HttpStatus.OK);
+    }
 
-        return new ResponseEntity<>(res, getCorsHeaders(), HttpStatus.OK);
+    @GetMapping("/event/{eventName}")
+    public ResponseEntity<Model> getEvent(@PathVariable("eventName") String eventName,
+                                          Model model, HttpServletRequest request, Locale locale) {
+        if ("/event/show-event".equals(eventController.showEvent(eventName, model, request, locale))) {
+            return new ResponseEntity<>(model, getCorsHeaders(), HttpStatus.OK);
+        } else {
+            return ResponseEntity.notFound().headers(getCorsHeaders()).build();
+        }
+    }
+
+    @PostMapping(value = "/event/{eventName}/reserve-tickets")
+    public ResponseEntity<Model> reserveTicket(@PathVariable("eventName") String eventName,
+                                               @RequestBody ReservationForm reservation,
+                                               BindingResult bindingResult,
+                                               ServletWebRequest request,
+                                               RedirectAttributes redirectAttributes,
+                                               Locale locale) {
+
+        String redirectResult = eventController.reserveTicket(eventName, reservation, bindingResult, request, redirectAttributes, locale);
+
+        if (bindingResult.hasErrors()) {
+            return new ResponseEntity<>(redirectAttributes, getCorsHeaders(), HttpStatus.OK);
+        } else {
+            String reservationIdentifier = redirectResult.substring(redirectResult.length()).replace("/book", "");
+            redirectAttributes.addAttribute("reservationIdentifier", reservationIdentifier);
+            return new ResponseEntity<>(redirectAttributes, getCorsHeaders(), HttpStatus.OK);
+        }
+
     }
 
 

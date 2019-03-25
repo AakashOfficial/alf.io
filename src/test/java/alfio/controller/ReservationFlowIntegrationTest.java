@@ -606,7 +606,7 @@ public class ReservationFlowIntegrationTest extends BaseIntegrationTest {
         request.setMethod("POST");
         ServletWebRequest servletWebRequest = new ServletWebRequest(request);
         BindingResult bindingResult = new BeanPropertyBindingResult(reservationForm, "reservation");
-        Model model = new BindingAwareModelMap();
+
         RedirectAttributes redirectAttributes = new RedirectAttributesModelMap();
         TicketReservationModification ticketReservation = new TicketReservationModification();
         ticketReservation.setAmount(1);
@@ -614,7 +614,7 @@ public class ReservationFlowIntegrationTest extends BaseIntegrationTest {
         reservationForm.setReservation(Collections.singletonList(ticketReservation));
 
 
-        return eventController.reserveTicket(eventName, reservationForm, bindingResult, model, servletWebRequest, redirectAttributes, Locale.ENGLISH);
+        return eventController.reserveTicket(eventName, reservationForm, bindingResult, servletWebRequest, redirectAttributes, Locale.ENGLISH);
     }
 
 }
