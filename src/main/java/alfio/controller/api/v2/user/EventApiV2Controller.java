@@ -18,6 +18,7 @@ package alfio.controller.api.v2.user;
 
 import alfio.controller.EventController;
 import alfio.controller.form.ReservationForm;
+import alfio.model.result.ValidationResult;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,15 @@ public class EventApiV2Controller {
         }
     }
 
+    @PostMapping("/event/{eventName}/promoCode/{promoCode}")
+    @ResponseBody
+    public ValidationResult savePromoCode(@PathVariable("eventName") String eventName,
+                                          @PathVariable("promoCode") String promoCode,
+                                          Model model,
+                                          HttpServletRequest request) {
+        return eventController.savePromoCode(eventName, promoCode, model, request);
+    }
+
     @PostMapping(value = "/event/{eventName}/reserve-tickets")
     public ResponseEntity<Map<String, ?>> reserveTicket(@PathVariable("eventName") String eventName,
                                                @RequestBody ReservationForm reservation,
@@ -72,7 +82,7 @@ public class EventApiV2Controller {
         } else {
             String reservationIdentifier = redirectResult.substring(redirectResult.length()).replace("/book", "");
             redirectAttributes.addAttribute("reservationIdentifier", reservationIdentifier);
-            return new ResponseEntity<>(redirectAttributes.asMap(), getCorsHeaders(), HttpStatus.OK);
+            return new ResponseEntity<>(redirectAttributes.asMap(), HttpStatus.OK);
         }
 
     }
