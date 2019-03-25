@@ -42,7 +42,6 @@ import alfio.repository.TicketFieldRepository;
 import alfio.repository.TicketReservationRepository;
 import alfio.repository.user.OrganizationRepository;
 import alfio.util.ErrorsCode;
-import alfio.util.TemplateManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -85,10 +84,8 @@ public class ReservationController {
     private final TicketReservationManager ticketReservationManager;
     private final OrganizationRepository organizationRepository;
 
-    private final TemplateManager templateManager;
     private final MessageSource messageSource;
     private final ConfigurationManager configurationManager;
-    private final NotificationManager notificationManager;
     private final TicketHelper ticketHelper;
     private final TicketFieldRepository ticketFieldRepository;
     private final PaymentManager paymentManager;
