@@ -18,10 +18,12 @@ package alfio.controller.api.v2.user;
 
 import alfio.controller.ReservationController;
 import alfio.controller.form.ContactAndTicketsForm;
+import alfio.controller.form.PaymentForm;
 import alfio.controller.support.SessionUtil;
 import alfio.controller.support.TicketDecorator;
 import alfio.manager.TicketReservationManager;
 import alfio.model.TicketCategory;
+import alfio.repository.TicketReservationRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
@@ -47,8 +49,7 @@ public class ReservationApiV2Controller {
 
     private final ReservationController reservationController;
     private final TicketReservationManager ticketReservationManager;
-
-
+    private final TicketReservationRepository ticketReservationRepository;
 
     @AllArgsConstructor
     @Getter
@@ -78,9 +79,41 @@ public class ReservationApiV2Controller {
     public ResponseEntity<Boolean> cancelPendingReservation(@PathVariable("eventName") String eventName,
                                                             @PathVariable("reservationId") String reservationId,
                                                             HttpServletRequest request) {
+
+        //FIXME check precondition (see ReservationController.redirectIfNotValid)
         ticketReservationManager.cancelPendingReservation(reservationId, false, null);
         SessionUtil.cleanupSession(request);
         return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    @PostMapping("/event/{eventName}/reservation/{reservationId}/back-to-booking")
+    public ResponseEntity<Boolean> backToBook(@PathVariable("eventName") String eventName,
+                                              @PathVariable("reservationId") String reservationId) {
+
+        //FIXME check precondition (see ReservationController.redirectIfNotValid)
+
+        ticketReservationRepository.updateValidationStatus(reservationId, false);
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    @PostMapping("/event/{eventName}/reservation/{reservationId}")
+    public ResponseEntity<Map<String, ?>> handleReservation(@PathVariable("eventName") String eventName,
+                                  @PathVariable("reservationId") String reservationId,
+                                  @RequestBody  PaymentForm paymentForm,
+                                  BindingResult bindingResult,
+                                  Model model,
+                                  HttpServletRequest request,
+                                  Locale locale,
+                                  RedirectAttributes redirectAttributes,
+                                  HttpSession session) {
+        //FIXME check precondition (see ReservationController.redirectIfNotValid)
+
+        var res = reservationController.handleReservation(eventName, reservationId, paymentForm,
+            bindingResult, model, request, locale, redirectAttributes,
+            session);
+        Map<String, Object> mapRes = new HashMap<>();
+        mapRes.put("viewState", res);
+        return new ResponseEntity<>(mapRes, HttpStatus.OK);
     }
 
     @PostMapping("/event/{eventName}/reservation/{reservationId}/validate-to-overview")
@@ -90,6 +123,8 @@ public class ReservationApiV2Controller {
                                    BindingResult bindingResult,
                                    HttpServletRequest request,
                                    RedirectAttributes redirectAttributes) {
+
+        //FIXME check precondition (see ReservationController.redirectIfNotValid)
 
         var res = reservationController.validateToOverview(eventName, reservationId, contactAndTicketsForm, bindingResult, request, redirectAttributes);
         var model = new HashMap<String, Object>();
