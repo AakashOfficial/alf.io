@@ -18,7 +18,9 @@ package alfio.controller.api.v2.user;
 
 import alfio.controller.ReservationController;
 import alfio.controller.form.ContactAndTicketsForm;
+import alfio.controller.support.SessionUtil;
 import alfio.controller.support.TicketDecorator;
+import alfio.manager.TicketReservationManager;
 import alfio.model.TicketCategory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +46,7 @@ import java.util.stream.Collectors;
 public class ReservationApiV2Controller {
 
     private final ReservationController reservationController;
+    private final TicketReservationManager ticketReservationManager;
 
 
 
@@ -70,6 +74,15 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
     }
 
+    @DeleteMapping("/event/{eventName}/reservation/{reservationId}")
+    public ResponseEntity<Boolean> cancelPendingReservation(@PathVariable("eventName") String eventName,
+                                                            @PathVariable("reservationId") String reservationId,
+                                                            HttpServletRequest request) {
+        ticketReservationManager.cancelPendingReservation(reservationId, false, null);
+        SessionUtil.cleanupSession(request);
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
     @PostMapping("/event/{eventName}/reservation/{reservationId}/validate-to-overview")
     public ResponseEntity<Map<String, ?>> validateToOverview(@PathVariable("eventName") String eventName,
                                    @PathVariable("reservationId") String reservationId,
@@ -83,6 +96,17 @@ public class ReservationApiV2Controller {
         model.put("viewState", res);
         //model.put("bindingResult", bindingResult.getModel()); <- cause 400 error
         return new ResponseEntity<>(model, HttpStatus.OK);
+    }
+
+    @GetMapping("/event/{eventName}/reservation/{reservationId}/overview")
+    public ResponseEntity<Map<String, ?>> showOverview(@PathVariable("eventName") String eventName,
+                               @PathVariable("reservationId") String reservationId,
+                               Locale locale,
+                               Model model,
+                               HttpSession session) {
+        var res = reservationController.showOverview(eventName, reservationId, locale, model, session);
+        model.addAttribute("viewState", res);
+        return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
     }
 
 }
