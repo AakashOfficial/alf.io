@@ -17,7 +17,11 @@
 package alfio.controller.api.v2.user;
 
 import alfio.controller.ReservationController;
+import alfio.controller.support.TicketDecorator;
+import alfio.model.TicketCategory;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -26,8 +30,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @AllArgsConstructor
@@ -38,6 +44,13 @@ public class ReservationApiV2Controller {
 
 
 
+    @AllArgsConstructor
+    @Getter
+    public static class TicketsByTicketCategory {
+        private final TicketCategory ticketCategory;
+        private final List<TicketDecorator> tickets;
+    }
+
     @GetMapping("/event/{eventName}/reservation/{reservationId}/book")
     public ResponseEntity<Map<String, ?>> getBookingInfo(@PathVariable("eventName") String eventName,
                                                          @PathVariable("reservationId") String reservationId,
@@ -46,6 +59,11 @@ public class ReservationApiV2Controller {
         String res = reservationController.showBookingPage(eventName, reservationId, model, locale);
         //FIXME temporary
         model.addAttribute("viewState", res);
+
+        //overwrite with a better model object...
+        var ticketsByCategory = (List<Pair<TicketCategory, List<TicketDecorator>>>) model.asMap().get("ticketsByCategory");
+        model.addAttribute("ticketsByCategory", ticketsByCategory.stream().map(a -> new TicketsByTicketCategory(a.getKey(), a.getValue())).collect(Collectors.toList()));
+
         return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
     }
 
