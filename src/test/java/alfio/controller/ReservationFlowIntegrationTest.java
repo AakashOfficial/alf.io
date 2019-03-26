@@ -582,7 +582,7 @@ public class ReservationFlowIntegrationTest extends BaseIntegrationTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         RedirectAttributes redirectAttributes = new RedirectAttributesModelMap();
 
-        reservationController.validateToOverview(eventName, reservationIdentifier, contactAndTicketsForm, bindingResult, model, request, Locale.ENGLISH, redirectAttributes);
+        reservationController.validateToOverview(eventName, reservationIdentifier, contactAndTicketsForm, bindingResult, request, redirectAttributes);
 
         Assert.assertEquals("/event/overview", reservationController.showOverview(eventName, reservationIdentifier, Locale.ENGLISH, model, new MockHttpSession()));
 

@@ -17,6 +17,7 @@
 package alfio.controller.api.v2.user;
 
 import alfio.controller.ReservationController;
+import alfio.controller.form.ContactAndTicketsForm;
 import alfio.controller.support.TicketDecorator;
 import alfio.model.TicketCategory;
 import lombok.AllArgsConstructor;
@@ -25,11 +26,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,15 +58,31 @@ public class ReservationApiV2Controller {
                                                          @PathVariable("reservationId") String reservationId,
                                                          Model model,
                                                          Locale locale) {
-        String res = reservationController.showBookingPage(eventName, reservationId, model, locale);
+        var res = reservationController.showBookingPage(eventName, reservationId, model, locale);
         //FIXME temporary
         model.addAttribute("viewState", res);
 
         //overwrite with a better model object...
         var ticketsByCategory = (List<Pair<TicketCategory, List<TicketDecorator>>>) model.asMap().get("ticketsByCategory");
-        model.addAttribute("ticketsByCategory", ticketsByCategory.stream().map(a -> new TicketsByTicketCategory(a.getKey(), a.getValue())).collect(Collectors.toList()));
-
+        if (ticketsByCategory != null) {
+            model.addAttribute("ticketsByCategory", ticketsByCategory.stream().map(a -> new TicketsByTicketCategory(a.getKey(), a.getValue())).collect(Collectors.toList()));
+        }
         return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
+    }
+
+    @PostMapping("/event/{eventName}/reservation/{reservationId}/validate-to-overview")
+    public ResponseEntity<Map<String, ?>> validateToOverview(@PathVariable("eventName") String eventName,
+                                   @PathVariable("reservationId") String reservationId,
+                                   @RequestBody ContactAndTicketsForm contactAndTicketsForm,
+                                   BindingResult bindingResult,
+                                   HttpServletRequest request,
+                                   RedirectAttributes redirectAttributes) {
+
+        var res = reservationController.validateToOverview(eventName, reservationId, contactAndTicketsForm, bindingResult, request, redirectAttributes);
+        var model = new HashMap<String, Object>();
+        model.put("viewState", res);
+        //model.put("bindingResult", bindingResult.getModel()); <- cause 400 error
+        return new ResponseEntity<>(model, HttpStatus.OK);
     }
 
 }

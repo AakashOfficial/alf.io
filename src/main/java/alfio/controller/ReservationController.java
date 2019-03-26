@@ -233,7 +233,7 @@ public class ReservationController {
     @RequestMapping(value = "/event/{eventName}/reservation/{reservationId}/validate-to-overview", method = RequestMethod.POST)
     public String validateToOverview(@PathVariable("eventName") String eventName, @PathVariable("reservationId") String reservationId,
                                      ContactAndTicketsForm contactAndTicketsForm, BindingResult bindingResult,
-                                     Model model, HttpServletRequest request, Locale locale, RedirectAttributes redirectAttributes) {
+                                     HttpServletRequest request, RedirectAttributes redirectAttributes) {
 
         Optional<Event> eventOptional = eventRepository.findOptionalByShortName(eventName);
         return redirectIfNotValid(contactAndTicketsForm.isBackFromOverview(), contactAndTicketsForm.shouldCancelReservation(), eventName, reservationId, request, eventOptional)
