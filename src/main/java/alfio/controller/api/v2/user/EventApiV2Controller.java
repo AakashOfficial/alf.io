@@ -19,7 +19,9 @@ package alfio.controller.api.v2.user;
 import alfio.controller.EventController;
 import alfio.controller.form.ReservationForm;
 import alfio.manager.EventManager;
+import alfio.model.Event;
 import alfio.model.result.ValidationResult;
+import alfio.repository.EventRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,6 +44,7 @@ public class EventApiV2Controller {
 
     private final EventController eventController;
     private final EventManager eventManager;
+    private final EventRepository eventRepository;
 
 
     @GetMapping("tmp/events")
@@ -53,8 +56,15 @@ public class EventApiV2Controller {
         return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
     }
 
+    @GetMapping("event/${eventName")
+    public ResponseEntity<Event> getEvent(@PathVariable("eventName") String eventName) {
+        return eventRepository.findOptionalByShortName(eventName).filter(e -> e.getStatus() != Event.Status.DISABLED)//
+            .map(event -> new ResponseEntity<>(event, getCorsHeaders(), HttpStatus.OK))
+            .orElseGet(() -> ResponseEntity.notFound().headers(getCorsHeaders()).build());
+    }
+
     @GetMapping("tmp/event/{eventName}")
-    public ResponseEntity<Map<String, ?>> getEvent(@PathVariable("eventName") String eventName,
+    public ResponseEntity<Map<String, ?>> getTmpEvent(@PathVariable("eventName") String eventName,
                                           Model model, HttpServletRequest request, Locale locale) {
         if ("/event/show-event".equals(eventController.showEvent(eventName, model, request, locale))) {
             return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
