@@ -44,7 +44,7 @@ public class EventApiV2Controller {
     private final EventManager eventManager;
 
 
-    @GetMapping("events")
+    @GetMapping("tmp/events")
     public ResponseEntity<Map<String, ?>> listEvents(Model model, Locale locale, HttpServletRequest request) {
         if(!"/event/event-list".equals(eventController.listEvents(model, locale))) {
             model.addAttribute("singleEvent", true);
@@ -53,7 +53,7 @@ public class EventApiV2Controller {
         return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
     }
 
-    @GetMapping("/event/{eventName}")
+    @GetMapping("tmp/event/{eventName}")
     public ResponseEntity<Map<String, ?>> getEvent(@PathVariable("eventName") String eventName,
                                           Model model, HttpServletRequest request, Locale locale) {
         if ("/event/show-event".equals(eventController.showEvent(eventName, model, request, locale))) {
@@ -63,7 +63,7 @@ public class EventApiV2Controller {
         }
     }
 
-    @PostMapping("/event/{eventName}/promoCode/{promoCode}")
+    @PostMapping("tmp/event/{eventName}/promoCode/{promoCode}")
     @ResponseBody
     public ValidationResult savePromoCode(@PathVariable("eventName") String eventName,
                                           @PathVariable("promoCode") String promoCode,
@@ -72,7 +72,7 @@ public class EventApiV2Controller {
         return eventController.savePromoCode(eventName, promoCode, model, request);
     }
 
-    @PostMapping(value = "/event/{eventName}/reserve-tickets")
+    @PostMapping(value = "tmp/event/{eventName}/reserve-tickets")
     public ResponseEntity<Map<String, ?>> reserveTicket(@PathVariable("eventName") String eventName,
                                                @RequestBody ReservationForm reservation,
                                                BindingResult bindingResult,

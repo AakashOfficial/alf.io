@@ -58,7 +58,7 @@ public class ReservationApiV2Controller {
         private final List<TicketDecorator> tickets;
     }
 
-    @GetMapping("/event/{eventName}/reservation/{reservationId}/book")
+    @GetMapping("/tmp/event/{eventName}/reservation/{reservationId}/book")
     public ResponseEntity<Map<String, ?>> getBookingInfo(@PathVariable("eventName") String eventName,
                                                          @PathVariable("reservationId") String reservationId,
                                                          Model model,
@@ -75,7 +75,7 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
     }
 
-    @DeleteMapping("/event/{eventName}/reservation/{reservationId}")
+    @DeleteMapping("/tmp/event/{eventName}/reservation/{reservationId}")
     public ResponseEntity<Boolean> cancelPendingReservation(@PathVariable("eventName") String eventName,
                                                             @PathVariable("reservationId") String reservationId,
                                                             HttpServletRequest request) {
@@ -86,7 +86,7 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
-    @PostMapping("/event/{eventName}/reservation/{reservationId}/back-to-booking")
+    @PostMapping("/tmp/event/{eventName}/reservation/{reservationId}/back-to-booking")
     public ResponseEntity<Boolean> backToBook(@PathVariable("eventName") String eventName,
                                               @PathVariable("reservationId") String reservationId) {
 
@@ -96,7 +96,7 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
-    @PostMapping("/event/{eventName}/reservation/{reservationId}")
+    @PostMapping("/tmp/event/{eventName}/reservation/{reservationId}")
     public ResponseEntity<Map<String, ?>> handleReservation(@PathVariable("eventName") String eventName,
                                   @PathVariable("reservationId") String reservationId,
                                   @RequestBody  PaymentForm paymentForm,
@@ -116,7 +116,7 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(mapRes, HttpStatus.OK);
     }
 
-    @PostMapping("/event/{eventName}/reservation/{reservationId}/validate-to-overview")
+    @PostMapping("/tmp/event/{eventName}/reservation/{reservationId}/validate-to-overview")
     public ResponseEntity<Map<String, ?>> validateToOverview(@PathVariable("eventName") String eventName,
                                    @PathVariable("reservationId") String reservationId,
                                    @RequestBody ContactAndTicketsForm contactAndTicketsForm,
@@ -133,7 +133,7 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(model, HttpStatus.OK);
     }
 
-    @GetMapping("/event/{eventName}/reservation/{reservationId}/overview")
+    @GetMapping("/tmp/event/{eventName}/reservation/{reservationId}/overview")
     public ResponseEntity<Map<String, ?>> showOverview(@PathVariable("eventName") String eventName,
                                @PathVariable("reservationId") String reservationId,
                                Locale locale,
@@ -144,7 +144,7 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
     }
 
-    @GetMapping("/event/{eventName}/reservation/{reservationId}/success")
+    @GetMapping("/tmp/event/{eventName}/reservation/{reservationId}/success")
     public ResponseEntity<Map<String, ?>> showConfirmationPage(@PathVariable("eventName") String eventName,
                                                       @PathVariable("reservationId") String reservationId,
                                                       Locale locale,
