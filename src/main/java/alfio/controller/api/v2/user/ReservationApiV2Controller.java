@@ -144,4 +144,17 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
     }
 
+    @GetMapping("/event/{eventName}/reservation/{reservationId}/success")
+    public ResponseEntity<Map<String, ?>> showConfirmationPage(@PathVariable("eventName") String eventName,
+                                                      @PathVariable("reservationId") String reservationId,
+                                                      Locale locale,
+                                                      Model model,
+                                                      HttpServletRequest request) {
+
+        var res = reservationController.showConfirmationPage(eventName, reservationId, false, false,
+            model, locale, request);
+        model.addAttribute("viewState", res);
+        return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
+    }
+
 }
