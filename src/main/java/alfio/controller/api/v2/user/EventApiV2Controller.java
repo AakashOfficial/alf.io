@@ -19,8 +19,13 @@ package alfio.controller.api.v2.user;
 import alfio.controller.EventController;
 import alfio.controller.form.ReservationForm;
 import alfio.manager.EventManager;
+import alfio.manager.system.ConfigurationManager;
+import alfio.model.ContentLanguage;
 import alfio.model.Event;
+import alfio.model.modification.support.LocationDescriptor;
 import alfio.model.result.ValidationResult;
+import alfio.model.system.Configuration;
+import alfio.model.system.ConfigurationKeys;
 import alfio.repository.EventRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -33,8 +38,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 
 @RestController
@@ -45,6 +49,7 @@ public class EventApiV2Controller {
     private final EventController eventController;
     private final EventManager eventManager;
     private final EventRepository eventRepository;
+    private final ConfigurationManager configurationManager;
 
 
     @GetMapping("tmp/events")
@@ -57,10 +62,49 @@ public class EventApiV2Controller {
     }
 
     @GetMapping("event/{eventName}")
-    public ResponseEntity<Event> getEvent(@PathVariable("eventName") String eventName) {
+    public ResponseEntity<EventWithAdditionalInfo> getEvent(@PathVariable("eventName") String eventName) {
         return eventRepository.findOptionalByShortName(eventName).filter(e -> e.getStatus() != Event.Status.DISABLED)//
-            .map(event -> new ResponseEntity<>(event, getCorsHeaders(), HttpStatus.OK))
+            .map(event -> {
+                Map<ConfigurationKeys, Optional<String>> geoInfoConfiguration = configurationManager.getStringConfigValueFrom(
+                    Configuration.from(event, ConfigurationKeys.MAPS_PROVIDER),
+                    Configuration.from(event, ConfigurationKeys.MAPS_CLIENT_API_KEY),
+                    Configuration.from(event, ConfigurationKeys.MAPS_HERE_APP_ID),
+                    Configuration.from(event, ConfigurationKeys.MAPS_HERE_APP_CODE));
+                LocationDescriptor ld = LocationDescriptor.fromGeoData(event.getLatLong(), TimeZone.getTimeZone(event.getTimeZone()), geoInfoConfiguration);
+                return new ResponseEntity<>(new EventWithAdditionalInfo(event, ld), getCorsHeaders(), HttpStatus.OK);
+            })
             .orElseGet(() -> ResponseEntity.notFound().headers(getCorsHeaders()).build());
+    }
+
+    @AllArgsConstructor
+    public static class EventWithAdditionalInfo {
+        private final Event event;
+        private final LocationDescriptor locationDescriptor;
+
+
+        public String getDisplayName() {
+            return event.getDisplayName();
+        }
+
+        public boolean getFileBlobIdIsPresent() {
+            return event.getFileBlobIdIsPresent();
+        }
+
+        public String getFileBlobId() {
+            return event.getFileBlobId();
+        }
+
+        public String getImageUrl() {
+            return event.getImageUrl();
+        }
+
+        public List<ContentLanguage> getContentLanguages() {
+            return event.getContentLanguages();
+        }
+
+        public LocationDescriptor getLocationDescriptor() {
+            return locationDescriptor;
+        }
     }
 
     @GetMapping("tmp/event/{eventName}")
