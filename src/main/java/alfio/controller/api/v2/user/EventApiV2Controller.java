@@ -56,7 +56,7 @@ public class EventApiV2Controller {
         return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
     }
 
-    @GetMapping("event/{eventName")
+    @GetMapping("event/{eventName}")
     public ResponseEntity<Event> getEvent(@PathVariable("eventName") String eventName) {
         return eventRepository.findOptionalByShortName(eventName).filter(e -> e.getStatus() != Event.Status.DISABLED)//
             .map(event -> new ResponseEntity<>(event, getCorsHeaders(), HttpStatus.OK))
