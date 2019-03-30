@@ -105,6 +105,10 @@ public class EventApiV2Controller {
             return event.getImageUrl();
         }
 
+        public String getWebsiteUrl() {
+            return event.getWebsiteUrl();
+        }
+
         public List<ContentLanguage> getContentLanguages() {
             return event.getContentLanguages();
         }
