@@ -26,7 +26,9 @@ import alfio.model.modification.support.LocationDescriptor;
 import alfio.model.result.ValidationResult;
 import alfio.model.system.Configuration;
 import alfio.model.system.ConfigurationKeys;
+import alfio.model.user.Organization;
 import alfio.repository.EventRepository;
+import alfio.repository.user.OrganizationRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -50,6 +52,7 @@ public class EventApiV2Controller {
     private final EventManager eventManager;
     private final EventRepository eventRepository;
     private final ConfigurationManager configurationManager;
+    private final OrganizationRepository organizationRepository;
 
 
     @GetMapping("tmp/events")
@@ -65,13 +68,16 @@ public class EventApiV2Controller {
     public ResponseEntity<EventWithAdditionalInfo> getEvent(@PathVariable("eventName") String eventName) {
         return eventRepository.findOptionalByShortName(eventName).filter(e -> e.getStatus() != Event.Status.DISABLED)//
             .map(event -> {
+
+                Organization organization = organizationRepository.getById(event.getOrganizationId());
+
                 Map<ConfigurationKeys, Optional<String>> geoInfoConfiguration = configurationManager.getStringConfigValueFrom(
                     Configuration.from(event, ConfigurationKeys.MAPS_PROVIDER),
                     Configuration.from(event, ConfigurationKeys.MAPS_CLIENT_API_KEY),
                     Configuration.from(event, ConfigurationKeys.MAPS_HERE_APP_ID),
                     Configuration.from(event, ConfigurationKeys.MAPS_HERE_APP_CODE));
                 LocationDescriptor ld = LocationDescriptor.fromGeoData(event.getLatLong(), TimeZone.getTimeZone(event.getTimeZone()), geoInfoConfiguration);
-                return new ResponseEntity<>(new EventWithAdditionalInfo(event, ld), getCorsHeaders(), HttpStatus.OK);
+                return new ResponseEntity<>(new EventWithAdditionalInfo(event, ld, organization), getCorsHeaders(), HttpStatus.OK);
             })
             .orElseGet(() -> ResponseEntity.notFound().headers(getCorsHeaders()).build());
     }
@@ -80,6 +86,7 @@ public class EventApiV2Controller {
     public static class EventWithAdditionalInfo {
         private final Event event;
         private final LocationDescriptor locationDescriptor;
+        private final Organization organization;
 
 
         public String getDisplayName() {
@@ -104,6 +111,14 @@ public class EventApiV2Controller {
 
         public LocationDescriptor getLocationDescriptor() {
             return locationDescriptor;
+        }
+
+        public String getOrganizationName() {
+            return organization.getName();
+        }
+
+        public String getOrganizationEmail() {
+            return organization.getEmail();
         }
     }
 
