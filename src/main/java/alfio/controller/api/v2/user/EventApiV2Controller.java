@@ -40,6 +40,8 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 
 
@@ -89,6 +91,10 @@ public class EventApiV2Controller {
         private final Organization organization;
 
 
+        public String getShortName() {
+            return event.getShortName();
+        }
+
         public String getDisplayName() {
             return event.getDisplayName();
         }
@@ -128,6 +134,15 @@ public class EventApiV2Controller {
         public String getLocation() {
             return event.getLocation();
         }
+    }
+
+    @GetMapping("event/{eventName}/calendar/{locale}")
+    public void getCalendar(@PathVariable("eventName") String eventName,
+                            @PathVariable("locale") String locale,
+                            @RequestParam(value = "type", required = false) String calendarType,
+                            @RequestParam(value = "ticketId", required = false) String ticketId,
+                            HttpServletResponse response) throws IOException {
+        eventController.calendar(eventName, locale, calendarType, ticketId, response);
     }
 
     @GetMapping("tmp/event/{eventName}")
