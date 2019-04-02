@@ -34,6 +34,9 @@ public interface EventDescriptionRepository {
     @Query("select * from event_description_text where event_id_fk = :eventId")
     List<EventDescription> findByEventId(@Bind("eventId") int eventId);
 
+    @Query("select * from event_description_text where event_id_fk = :eventId and type = :type")
+    List<EventDescription> findByEventIdAndType(@Bind("eventId") int eventId, @Bind("type")EventDescription.EventDescriptionType type);
+
     @Query("select * from event_description_text where event_id_fk in (:eventIds)")
     List<EventDescription> findByEventIds(@Bind("eventIds") Collection<Integer> eventIds);
 

@@ -22,13 +22,16 @@ import alfio.manager.EventManager;
 import alfio.manager.system.ConfigurationManager;
 import alfio.model.ContentLanguage;
 import alfio.model.Event;
+import alfio.model.EventDescription;
 import alfio.model.modification.support.LocationDescriptor;
 import alfio.model.result.ValidationResult;
 import alfio.model.system.Configuration;
 import alfio.model.system.ConfigurationKeys;
 import alfio.model.user.Organization;
+import alfio.repository.EventDescriptionRepository;
 import alfio.repository.EventRepository;
 import alfio.repository.user.OrganizationRepository;
+import alfio.util.MustacheCustomTagInterceptor;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -43,6 +46,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -55,6 +59,7 @@ public class EventApiV2Controller {
     private final EventRepository eventRepository;
     private final ConfigurationManager configurationManager;
     private final OrganizationRepository organizationRepository;
+    private final EventDescriptionRepository eventDescriptionRepository;
 
 
     @GetMapping("tmp/events")
@@ -71,6 +76,10 @@ public class EventApiV2Controller {
         return eventRepository.findOptionalByShortName(eventName).filter(e -> e.getStatus() != Event.Status.DISABLED)//
             .map(event -> {
 
+                Map<String, String> descriptions = eventDescriptionRepository.findByEventIdAndType(event.getId(), EventDescription.EventDescriptionType.DESCRIPTION)
+                    .stream()
+                    .collect(Collectors.toMap(d -> d.getLocale(), d -> MustacheCustomTagInterceptor.renderToCommonmark(d.getDescription())));
+
                 Organization organization = organizationRepository.getById(event.getOrganizationId());
 
                 Map<ConfigurationKeys, Optional<String>> geoInfoConfiguration = configurationManager.getStringConfigValueFrom(
@@ -79,7 +88,7 @@ public class EventApiV2Controller {
                     Configuration.from(event, ConfigurationKeys.MAPS_HERE_APP_ID),
                     Configuration.from(event, ConfigurationKeys.MAPS_HERE_APP_CODE));
                 LocationDescriptor ld = LocationDescriptor.fromGeoData(event.getLatLong(), TimeZone.getTimeZone(event.getTimeZone()), geoInfoConfiguration);
-                return new ResponseEntity<>(new EventWithAdditionalInfo(event, ld, organization), getCorsHeaders(), HttpStatus.OK);
+                return new ResponseEntity<>(new EventWithAdditionalInfo(event, ld, organization, descriptions), getCorsHeaders(), HttpStatus.OK);
             })
             .orElseGet(() -> ResponseEntity.notFound().headers(getCorsHeaders()).build());
     }
@@ -89,6 +98,7 @@ public class EventApiV2Controller {
         private final Event event;
         private final LocationDescriptor locationDescriptor;
         private final Organization organization;
+        private final Map<String, String> description;
 
 
         public String getShortName() {
@@ -133,6 +143,10 @@ public class EventApiV2Controller {
 
         public String getLocation() {
             return event.getLocation();
+        }
+
+        public Map<String, String> getDescription() {
+            return description;
         }
     }
 
