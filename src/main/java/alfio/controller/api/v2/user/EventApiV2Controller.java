@@ -124,6 +124,10 @@ public class EventApiV2Controller {
         public String getOrganizationEmail() {
             return organization.getEmail();
         }
+
+        public String getLocation() {
+            return event.getLocation();
+        }
     }
 
     @GetMapping("tmp/event/{eventName}")
