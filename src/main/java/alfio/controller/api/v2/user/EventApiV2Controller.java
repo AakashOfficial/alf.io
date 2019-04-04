@@ -17,10 +17,13 @@
 package alfio.controller.api.v2.user;
 
 import alfio.controller.EventController;
+import alfio.controller.api.v2.user.model.EventWithAdditionalInfo;
+import alfio.controller.api.v2.user.model.TicketCategories;
+import alfio.controller.api.v2.user.model.TicketCategory;
+import alfio.controller.decorator.SaleableTicketCategory;
 import alfio.controller.form.ReservationForm;
 import alfio.manager.EventManager;
 import alfio.manager.system.ConfigurationManager;
-import alfio.model.ContentLanguage;
 import alfio.model.Event;
 import alfio.model.EventDescription;
 import alfio.model.modification.support.LocationDescriptor;
@@ -30,6 +33,7 @@ import alfio.model.system.ConfigurationKeys;
 import alfio.model.user.Organization;
 import alfio.repository.EventDescriptionRepository;
 import alfio.repository.EventRepository;
+import alfio.repository.TicketCategoryDescriptionRepository;
 import alfio.repository.user.OrganizationRepository;
 import alfio.util.MustacheCustomTagInterceptor;
 import lombok.AllArgsConstructor;
@@ -60,11 +64,12 @@ public class EventApiV2Controller {
     private final ConfigurationManager configurationManager;
     private final OrganizationRepository organizationRepository;
     private final EventDescriptionRepository eventDescriptionRepository;
+    private final TicketCategoryDescriptionRepository ticketCategoryDescriptionRepository;
 
 
     @GetMapping("tmp/events")
-    public ResponseEntity<Map<String, ?>> listEvents(Model model, Locale locale, HttpServletRequest request) {
-        if(!"/event/event-list".equals(eventController.listEvents(model, locale))) {
+    public ResponseEntity<Map<String, ?>> listEvents(Model model, HttpServletRequest request) {
+        if(!"/event/event-list".equals(eventController.listEvents(model, Locale.ENGLISH))) {
             model.addAttribute("singleEvent", true);
             model.addAttribute("eventShortName", eventManager.getPublishedEvents().get(0).getShortName());
         }
@@ -76,9 +81,9 @@ public class EventApiV2Controller {
         return eventRepository.findOptionalByShortName(eventName).filter(e -> e.getStatus() != Event.Status.DISABLED)//
             .map(event -> {
 
-                Map<String, String> descriptions = eventDescriptionRepository.findByEventIdAndType(event.getId(), EventDescription.EventDescriptionType.DESCRIPTION)
+                var descriptions = applyCommonMark(eventDescriptionRepository.findByEventIdAndType(event.getId(), EventDescription.EventDescriptionType.DESCRIPTION)
                     .stream()
-                    .collect(Collectors.toMap(d -> d.getLocale(), d -> MustacheCustomTagInterceptor.renderToCommonmark(d.getDescription())));
+                    .collect(Collectors.toMap(EventDescription::getLocale, EventDescription::getDescription)));
 
                 Organization organization = organizationRepository.getById(event.getOrganizationId());
 
@@ -93,60 +98,25 @@ public class EventApiV2Controller {
             .orElseGet(() -> ResponseEntity.notFound().headers(getCorsHeaders()).build());
     }
 
-    @AllArgsConstructor
-    public static class EventWithAdditionalInfo {
-        private final Event event;
-        private final LocationDescriptor locationDescriptor;
-        private final Organization organization;
-        private final Map<String, String> description;
+    private static Map<String, String> applyCommonMark(Map<String, String> in) {
+        var res = new HashMap<String, String>();
+        in.forEach((k, v) -> {
+            res.put(k, MustacheCustomTagInterceptor.renderToCommonmark(v));
+        });
+        return res;
+    }
 
+    @GetMapping("event/{eventName}/ticket-categories")
+    public ResponseEntity<TicketCategories> getTicketCategories(@PathVariable("eventName") String eventName, Model model, HttpServletRequest request) {
+        if ("/event/show-event".equals(eventController.showEvent(eventName, model, request, Locale.ENGLISH))) {
+            var valid = (List<SaleableTicketCategory>) model.asMap().get("ticketCategories");
+            var ticketCategoryIds = valid.stream().map(SaleableTicketCategory::getId).collect(Collectors.toList());
+            var res = ticketCategoryDescriptionRepository.descriptionsByTicketCategory(ticketCategoryIds);
 
-        public String getShortName() {
-            return event.getShortName();
-        }
-
-        public String getDisplayName() {
-            return event.getDisplayName();
-        }
-
-        public boolean getFileBlobIdIsPresent() {
-            return event.getFileBlobIdIsPresent();
-        }
-
-        public String getFileBlobId() {
-            return event.getFileBlobId();
-        }
-
-        public String getImageUrl() {
-            return event.getImageUrl();
-        }
-
-        public String getWebsiteUrl() {
-            return event.getWebsiteUrl();
-        }
-
-        public List<ContentLanguage> getContentLanguages() {
-            return event.getContentLanguages();
-        }
-
-        public LocationDescriptor getLocationDescriptor() {
-            return locationDescriptor;
-        }
-
-        public String getOrganizationName() {
-            return organization.getName();
-        }
-
-        public String getOrganizationEmail() {
-            return organization.getEmail();
-        }
-
-        public String getLocation() {
-            return event.getLocation();
-        }
-
-        public Map<String, String> getDescription() {
-            return description;
+            var converted = valid.stream().map(stc -> new TicketCategory(stc, applyCommonMark(res.get(stc.getId())))).collect(Collectors.toList());
+            return new ResponseEntity<>(new TicketCategories(converted), getCorsHeaders(), HttpStatus.OK);
+        } else {
+            return ResponseEntity.notFound().headers(getCorsHeaders()).build();
         }
     }
 
@@ -157,16 +127,6 @@ public class EventApiV2Controller {
                             @RequestParam(value = "ticketId", required = false) String ticketId,
                             HttpServletResponse response) throws IOException {
         eventController.calendar(eventName, locale, calendarType, ticketId, response);
-    }
-
-    @GetMapping("tmp/event/{eventName}")
-    public ResponseEntity<Map<String, ?>> getTmpEvent(@PathVariable("eventName") String eventName,
-                                          Model model, HttpServletRequest request, Locale locale) {
-        if ("/event/show-event".equals(eventController.showEvent(eventName, model, request, locale))) {
-            return new ResponseEntity<>(model.asMap(), getCorsHeaders(), HttpStatus.OK);
-        } else {
-            return ResponseEntity.notFound().headers(getCorsHeaders()).build();
-        }
     }
 
     @PostMapping("tmp/event/{eventName}/promoCode/{promoCode}")
