@@ -72,7 +72,8 @@ public class ReservationApiV2Controller {
         if (ticketsByCategory != null) {
             model.addAttribute("ticketsByCategory", ticketsByCategory.stream().map(a -> new TicketsByTicketCategory(a.getKey(), a.getValue())).collect(Collectors.toList()));
         }
-        return new ResponseEntity<>(model.asMap(), HttpStatus.OK);
+        var r = new HashMap<>(model.asMap());
+        return new ResponseEntity<>(r, HttpStatus.OK);
     }
 
     @DeleteMapping("/tmp/event/{eventName}/reservation/{reservationId}")
