@@ -523,7 +523,7 @@ public class ReservationController {
     }
 
 
-    private String redirectReservation(Optional<TicketReservation> ticketReservation, String eventName, String reservationId) {
+    public String redirectReservation(Optional<TicketReservation> ticketReservation, String eventName, String reservationId) {
         String baseUrl = "redirect:/event/" + eventName + "/reservation/" + reservationId;
         if(ticketReservation.isEmpty()) {
             return baseUrl + "/notfound";

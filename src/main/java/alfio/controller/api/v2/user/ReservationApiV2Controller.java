@@ -22,7 +22,9 @@ import alfio.controller.form.PaymentForm;
 import alfio.controller.support.SessionUtil;
 import alfio.controller.support.TicketDecorator;
 import alfio.manager.TicketReservationManager;
+import alfio.model.Event;
 import alfio.model.TicketCategory;
+import alfio.repository.EventRepository;
 import alfio.repository.TicketReservationRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -36,10 +38,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -47,6 +46,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v2/public/")
 public class ReservationApiV2Controller {
 
+    private final EventRepository eventRepository;
     private final ReservationController reservationController;
     private final TicketReservationManager ticketReservationManager;
     private final TicketReservationRepository ticketReservationRepository;
@@ -56,6 +56,16 @@ public class ReservationApiV2Controller {
     public static class TicketsByTicketCategory {
         private final TicketCategory ticketCategory;
         private final List<TicketDecorator> tickets;
+    }
+
+    @GetMapping("/tmp/event/{eventName}/reservation/{reservationId}/status")
+    public ResponseEntity<String> getStatus(@PathVariable("eventName") String eventName,
+                                            @PathVariable("reservationId") String reservationId) {
+        Optional<Event> event = eventRepository.findOptionalByShortName(eventName);
+        if (event.isEmpty()) {
+            return new ResponseEntity<>("redirect:/", HttpStatus.OK);
+        }
+        return new ResponseEntity<>(reservationController.redirectReservation(ticketReservationManager.findById(reservationId), eventName, reservationId), HttpStatus.OK);
     }
 
     @GetMapping("/tmp/event/{eventName}/reservation/{reservationId}/book")
