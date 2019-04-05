@@ -58,6 +58,13 @@ public class ReservationApiV2Controller {
         private final List<TicketDecorator> tickets;
     }
 
+    @AllArgsConstructor
+    @Getter
+    public static class BookingInfo {
+        List<TicketsByTicketCategory> ticketsByCategory;
+    }
+
+
     @GetMapping("/tmp/event/{eventName}/reservation/{reservationId}/status")
     public ResponseEntity<String> getStatus(@PathVariable("eventName") String eventName,
                                             @PathVariable("reservationId") String reservationId) {
@@ -68,8 +75,10 @@ public class ReservationApiV2Controller {
         return new ResponseEntity<>(reservationController.redirectReservation(ticketReservationManager.findById(reservationId), eventName, reservationId), HttpStatus.OK);
     }
 
+
+
     @GetMapping("/tmp/event/{eventName}/reservation/{reservationId}/book")
-    public ResponseEntity<Map<String, ?>> getBookingInfo(@PathVariable("eventName") String eventName,
+    public ResponseEntity<BookingInfo> getBookingInfo(@PathVariable("eventName") String eventName,
                                                          @PathVariable("reservationId") String reservationId,
                                                          Model model,
                                                          Locale locale) {
@@ -83,7 +92,8 @@ public class ReservationApiV2Controller {
             model.addAttribute("ticketsByCategory", ticketsByCategory.stream().map(a -> new TicketsByTicketCategory(a.getKey(), a.getValue())).collect(Collectors.toList()));
         }
         var r = new HashMap<>(model.asMap());
-        return new ResponseEntity<>(r, HttpStatus.OK);
+        var b = new BookingInfo((List<TicketsByTicketCategory>) r.get("ticketsByCategory"));
+        return new ResponseEntity<>(b, HttpStatus.OK);
     }
 
     @DeleteMapping("/tmp/event/{eventName}/reservation/{reservationId}")
