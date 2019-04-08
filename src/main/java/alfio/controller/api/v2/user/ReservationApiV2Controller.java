@@ -139,15 +139,16 @@ public class ReservationApiV2Controller {
 
     @PostMapping("/tmp/event/{eventName}/reservation/{reservationId}/validate-to-overview")
     public ResponseEntity<Map<String, ?>> validateToOverview(@PathVariable("eventName") String eventName,
-                                   @PathVariable("reservationId") String reservationId,
-                                   @RequestBody ContactAndTicketsForm contactAndTicketsForm,
-                                   BindingResult bindingResult,
-                                   HttpServletRequest request,
-                                   RedirectAttributes redirectAttributes) {
+                                                             @PathVariable("reservationId") String reservationId,
+                                                             @RequestBody ContactAndTicketsForm contactAndTicketsForm,
+                                                             BindingResult bindingResult,
+                                                             HttpServletRequest request,
+                                                             RedirectAttributes redirectAttributes,
+                                                             Locale locale) {
 
         //FIXME check precondition (see ReservationController.redirectIfNotValid)
 
-        var res = reservationController.validateToOverview(eventName, reservationId, contactAndTicketsForm, bindingResult, request, redirectAttributes);
+        var res = reservationController.validateToOverview(eventName, reservationId, contactAndTicketsForm, bindingResult, request, redirectAttributes, locale);
         var model = new HashMap<String, Object>();
         model.put("viewState", res);
         //model.put("bindingResult", bindingResult.getModel()); <- cause 400 error
