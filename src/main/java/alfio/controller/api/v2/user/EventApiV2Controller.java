@@ -99,6 +99,10 @@ public class EventApiV2Controller {
     }
 
     private static Map<String, String> applyCommonMark(Map<String, String> in) {
+        if (in == null) {
+            return Collections.emptyMap();
+        }
+
         var res = new HashMap<String, String>();
         in.forEach((k, v) -> {
             res.put(k, MustacheCustomTagInterceptor.renderToCommonmark(v));
@@ -111,9 +115,9 @@ public class EventApiV2Controller {
         if ("/event/show-event".equals(eventController.showEvent(eventName, model, request, Locale.ENGLISH))) {
             var valid = (List<SaleableTicketCategory>) model.asMap().get("ticketCategories");
             var ticketCategoryIds = valid.stream().map(SaleableTicketCategory::getId).collect(Collectors.toList());
-            var res = ticketCategoryDescriptionRepository.descriptionsByTicketCategory(ticketCategoryIds);
+            var ticketCategoryDescriptions = ticketCategoryDescriptionRepository.descriptionsByTicketCategory(ticketCategoryIds);
 
-            var converted = valid.stream().map(stc -> new TicketCategory(stc, applyCommonMark(res.get(stc.getId())))).collect(Collectors.toList());
+            var converted = valid.stream().map(stc -> new TicketCategory(stc, applyCommonMark(ticketCategoryDescriptions.get(stc.getId())))).collect(Collectors.toList());
             return new ResponseEntity<>(new TicketCategories(converted), getCorsHeaders(), HttpStatus.OK);
         } else {
             return ResponseEntity.notFound().headers(getCorsHeaders()).build();
