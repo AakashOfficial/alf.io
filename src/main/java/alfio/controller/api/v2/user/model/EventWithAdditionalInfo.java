@@ -81,7 +81,7 @@ public class EventWithAdditionalInfo {
         return description;
     }
 
-    public String getPrivacyPolicyLink() {
+    public String getPrivacyPolicyUrl() {
         return event.getPrivacyPolicyLinkOrNull();
     }
 
