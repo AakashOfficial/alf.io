@@ -80,4 +80,12 @@ public class EventWithAdditionalInfo {
     public Map<String, String> getDescription() {
         return description;
     }
+
+    public String getPrivacyPolicyLink() {
+        return event.getPrivacyPolicyLinkOrNull();
+    }
+
+    public String getTermsAndConditionsUrl() {
+        return event.getTermsAndConditionsUrl();
+    }
 }
